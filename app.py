@@ -1,5 +1,7 @@
 import streamlit as st
 import requests
+import os
+from datetime import datetime
 
 # Custom CSS for styling
 def apply_custom_css():
@@ -48,12 +50,21 @@ def get_token():
 def get_role():
     return st.session_state.get('role')
 
+# Function to log messages without status codes
+def log_message(message):
+    log_dir = 'logs'
+    log_file_path = f"{log_dir}/app_log.txt"
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    with open(log_file_path, "a") as log_file:
+        log_file.write(f"{datetime.now()} - {message}\n")
+
 # Function to display the profile with edit option
 def display_profile(edit_mode=False):
     token = get_token()
     if token:
         headers = {"Authorization": f"Bearer {token}"}
-        response = requests.get("http://127.0.0.1:8000/profile/", headers=headers)
+        response = requests.get("http://127.0.0.1:8000/api/profile/", headers=headers)
 
         if response.status_code == 200:
             profile = response.json()
@@ -70,12 +81,15 @@ def display_profile(edit_mode=False):
                         "employee_id": employee_id,
                     }
 
-                    update_response = requests.put("http://127.0.0.1:8000/profile/update/", headers=headers, data=data)
+                    update_response = requests.put("http://127.0.0.1:8000/api/profile/update/", headers=headers, json=data)
                     if update_response.status_code == 200:
                         st.success("Profile updated successfully!")
                         st.session_state['page'] = 'dashboard'  # Switch back to the dashboard page
+                        log_message("Profile updated successfully.")
                     else:
-                        st.error(f"Failed to update profile. Status code: {update_response.status_code}, Response: {update_response.text}")
+                        error_message = update_response.json().get('detail', 'Error updating profile.')
+                        log_message(f"Profile update failed: {error_message}")
+                        print(f"Failed to update profile. Response: {error_message}")  # Log to console
             else:
                 st.write(f"Name: {profile['name']}")
                 st.write(f"Email: {profile['email']}")
@@ -86,7 +100,15 @@ def display_profile(edit_mode=False):
                 if st.button("Change Password"):
                     st.session_state['page'] = 'change_password'
         else:
-            st.error(f"Failed to load profile. Status code: {response.status_code}, Response: {response.text}")
+            if response.status_code == 401:
+                st.error("Session expired. Please log in again.")
+                st.session_state.pop('access_token', None)
+                st.session_state['page'] = 'login'
+                log_message("Session expired, user logged out.")
+            else:
+                error_message = response.json().get('detail', 'Error loading profile.')
+                log_message(f"Profile load failed: {error_message}")
+                print(f"Failed to load profile. Response: {error_message}")  # Log to console
     else:
         st.warning("You need to log in first.")
 
@@ -109,13 +131,25 @@ def display_all_profiles():
                         delete_response = requests.delete(f"http://127.0.0.1:8000/api/users/{profile['id']}/", headers=headers)
                         if delete_response.status_code == 200:
                             st.success("User deleted successfully!")
+                            log_message(f"User {profile['email']} deleted successfully.")
                         else:
-                            st.error(f"Failed to delete user. Status code: {delete_response.status_code}, Response: {delete_response.text}")
+                            error_message = delete_response.json().get('detail', 'Error deleting user.')
+                            log_message(f"User delete failed: {error_message}")
+                            print(f"Failed to delete user. Response: {error_message}")  # Log to console
                     st.write("---")
             except requests.exceptions.JSONDecodeError:
-                st.error("Failed to decode JSON response from server. Please ensure the server is running correctly.")
+                log_message("Failed to decode JSON response from server. Please ensure the server is running correctly.")
+                print("Failed to decode JSON response from server. Please ensure the server is running correctly.")  # Log to console
         else:
-            st.error(f"Failed to load profiles. Status code: {response.status_code}, Response: {response.text}")
+            if response.status_code == 401:
+                st.error("Session expired. Please log in again.")
+                st.session_state.pop('access_token', None)
+                st.session_state['page'] = 'login'
+                log_message("Session expired, admin logged out.")
+            else:
+                error_message = response.json().get('detail', 'Error loading profiles.')
+                log_message(f"Profiles load failed: {error_message}")
+                print(f"Failed to load profiles. Response: {error_message}")  # Log to console
     else:
         st.warning("You need to log in first.")
 
@@ -133,13 +167,16 @@ def change_password():
             "new_password": new_password,
         }
 
-        response = requests.put("http://127.0.0.1:8000/profile/change-password/", headers=headers, data=data)
+        response = requests.put("http://127.0.0.1:8000/api/profile/change-password/", headers=headers, json=data)
 
         if response.status_code == 200:
             st.success("Password updated successfully!")
             st.session_state['page'] = 'dashboard'
+            log_message("Password updated successfully.")
         else:
-            st.error(f"Failed to change password. Status code: {response.status_code}, Response: {response.text}")
+            error_message = response.json().get('detail', 'Failed to change password.')
+            log_message(f"Password change failed: {error_message}")
+            print(f"Failed to change password. Response: {error_message}")  # Log to console
 
 # Function to create a new user (Admin)
 def add_user_form():
@@ -167,12 +204,14 @@ def add_user_form():
         if response.status_code == 201:
             st.success("User created successfully!")
             st.session_state['page'] = 'dashboard'
+            log_message(f"User {email} created successfully.")
         else:
             try:
                 error_message = response.json().get('detail', 'No additional error message provided.')
             except requests.exceptions.JSONDecodeError:
                 error_message = response.text
-            st.error(f"Failed to create user. Status code: {response.status_code}, Response: {error_message}")
+            log_message(f"User creation failed: {error_message}")
+            print(f"Failed to create user. Response: {error_message}")  # Log to console
 
     if st.button("Cancel"):
         st.session_state['page'] = 'dashboard'
@@ -207,7 +246,7 @@ if st.session_state['page'] == 'login':
             elif not any(char.isdigit() for char in password):
                 st.error("Password must contain at least one digit.")
             else:
-                api_url = "http://127.0.0.1:8000/register/"
+                api_url = "http://127.0.0.1:8000/api/register/"
 
                 data = {
                     "email": email,
@@ -217,14 +256,17 @@ if st.session_state['page'] == 'login':
                     "password": password,
                 }
 
-                response = requests.post(api_url, data=data)
+                response = requests.post(api_url, json=data)
 
                 # Handle the response
                 if response.status_code == 201:
                     st.success("Signup successful! Please login.")
                     st.session_state['page'] = 'login'
+                    log_message(f"User {email} registered successfully.")
                 else:
-                    st.error(f"Signup failed. Status code: {response.status_code}, Response: {response.text}")
+                    error_message = response.json().get('detail', 'Signup failed.')
+                    log_message(f"Signup failed: {error_message}")
+                    print(f"Signup failed. Response: {error_message}")  # Log to console
 
     elif user_action == "Login":
         st.title("Login")
@@ -240,7 +282,7 @@ if st.session_state['page'] == 'login':
                 "email": email,
                 "password": password,
             }
-            response = requests.post(api_url, data=data)
+            response = requests.post(api_url, json=data)
 
             if response.status_code == 200:
                 access_token = response.json().get('access')
@@ -248,8 +290,11 @@ if st.session_state['page'] == 'login':
                 store_token(access_token, role_type)
                 st.success("Login successful!")
                 st.session_state['page'] = 'dashboard'
+                log_message(f"User {email} logged in successfully.")
             else:
-                st.error("Login failed. Please try again.")
+                error_message = response.json().get('detail', 'Login failed.')
+                log_message(f"Login failed: {error_message}")
+                print(f"Login failed. Response: {error_message}")  # Log to console
 
     elif user_action == "Forgot Password":
         st.title("Forgot Password")
@@ -257,16 +302,19 @@ if st.session_state['page'] == 'login':
         email = st.text_input("Enter your email address")
 
         if st.button("Send Reset Link"):
-            api_url = "http://127.0.0.1:8000/request-reset-email/"
+            api_url = "http://127.0.0.1:8000/api/request-reset-email/"
             data = {
                 "email": email,
             }
-            response = requests.post(api_url, data=data)
+            response = requests.post(api_url, json=data)
 
             if response.status_code == 200:
                 st.success("Password reset link has been sent to your email.")
+                log_message(f"Password reset requested for {email}.")
             else:
-                st.error(f"Failed to send reset link. Status code: {response.status_code}, Response: {response.text}")
+                error_message = response.json().get('detail', 'Failed to send reset link.')
+                log_message(f"Password reset request failed: {error_message}")
+                print(f"Failed to send reset link. Response: {error_message}")  # Log to console
 
 elif st.session_state['page'] == 'dashboard':
     role = get_role()
@@ -276,6 +324,7 @@ elif st.session_state['page'] == 'dashboard':
         if st.button("Logout"):
             st.session_state.pop('access_token', None)
             st.session_state['page'] = 'login'
+            log_message("User logged out.")
 
     elif role == "admin":
         display_all_profiles()
@@ -284,6 +333,7 @@ elif st.session_state['page'] == 'dashboard':
         if st.button("Logout"):
             st.session_state.pop('access_token', None)
             st.session_state['page'] = 'login'
+            log_message("Admin logged out.")
 
 elif st.session_state['page'] == 'edit_profile':
     display_profile(edit_mode=True)
