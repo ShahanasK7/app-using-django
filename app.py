@@ -162,7 +162,7 @@ def add_user_form():
             "password": password,
         }
 
-        response = requests.post("http://127.0.0.1:8000/api/users/", headers=headers, data=data)
+        response = requests.post("http://127.0.0.1:8000/api/users/", headers=headers, json=data)  # Use JSON format for the request
 
         if response.status_code == 201:
             st.success("User created successfully!")
