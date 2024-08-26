@@ -83,8 +83,6 @@ def display_profile(edit_mode=False):
                 st.write(f"Employee ID: {profile['employee_id']}")
                 if st.button("Edit Profile"):
                     st.session_state['page'] = 'edit_profile'
-                if st.button("Change Password"):
-                    st.session_state['page'] = 'change_password'
         else:
             st.error(f"Failed to load profile. Status code: {response.status_code}, Response: {response.text}")
     else:
@@ -104,39 +102,11 @@ def display_all_profiles():
                 st.write(f"Email: {profile['email']}")
                 st.write(f"Phone Number: {profile['phone_number']}")
                 st.write(f"Employee ID: {profile['employee_id']}")
-                if st.button(f"Delete User {profile['email']}"):
-                    delete_response = requests.delete(f"http://127.0.0.1:8000/api/admin/users/{profile['id']}/", headers=headers)
-                    if delete_response.status_code == 200:
-                        st.success("User deleted successfully!")
-                    else:
-                        st.error(f"Failed to delete user. Status code: {delete_response.status_code}, Response: {delete_response.text}")
                 st.write("---")
         else:
             st.error(f"Failed to load profiles. Status code: {response.status_code}, Response: {response.text}")
     else:
         st.warning("You need to log in first.")
-
-# Function to display change password form
-def change_password():
-    st.title("Change Password")
-    current_password = st.text_input("Current Password", type="password")
-    new_password = st.text_input("New Password", type="password")
-
-    if st.button("Submit"):
-        token = get_token()
-        headers = {"Authorization": f"Bearer {token}"}
-        data = {
-            "current_password": current_password,
-            "new_password": new_password,
-        }
-
-        response = requests.put("http://127.0.0.1:8000/api/profile/change-password/", headers=headers, data=data)
-
-        if response.status_code == 200:
-            st.success("Password updated successfully!")
-            st.session_state['page'] = 'dashboard'
-        else:
-            st.error(f"Failed to change password. Status code: {response.status_code}, Response: {response.text}")
 
 # Main app logic
 if 'page' not in st.session_state:
@@ -240,46 +210,11 @@ elif st.session_state['page'] == 'dashboard':
 
     elif role == "admin":
         display_all_profiles()
-        if st.button("Add New User"):
-            st.session_state['page'] = 'add_user'
         if st.button("Logout"):
             st.session_state.pop('access_token', None)
             st.session_state['page'] = 'login'
 
 elif st.session_state['page'] == 'edit_profile':
     display_profile(edit_mode=True)
-    if st.button("Cancel"):
-        st.session_state['page'] = 'dashboard'
-
-elif st.session_state['page'] == 'change_password':
-    change_password()
-    if st.button("Cancel"):
-        st.session_state['page'] = 'dashboard'
-
-elif st.session_state['page'] == 'add_user':
-    st.title("Add New User")
-    email = st.text_input("Email")
-    name = st.text_input("Name")
-    phone_number = st.text_input("Phone Number")
-    employee_id = st.text_input("Employee ID")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Create User"):
-        data = {
-            "email": email,
-            "name": name,
-            "phone_number": phone_number,
-            "employee_id": employee_id,
-            "password": password,
-        }
-
-        response = requests.post("http://127.0.0.1:8000/api/admin/users/", data=data)
-
-        if response.status_code == 201:
-            st.success("User created successfully!")
-            st.session_state['page'] = 'dashboard'
-        else:
-            st.error(f"Failed to create user. Status code: {response.status_code}, Response: {response.text}")
-
     if st.button("Cancel"):
         st.session_state['page'] = 'dashboard'
