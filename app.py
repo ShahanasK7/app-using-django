@@ -53,7 +53,7 @@ def display_profile(edit_mode=False):
     token = get_token()
     if token:
         headers = {"Authorization": f"Bearer {token}"}
-        response = requests.get("http://127.0.0.1:8000/api/profile/", headers=headers)
+        response = requests.get("http://127.0.0.1:8000/profile/", headers=headers)
 
         if response.status_code == 200:
             profile = response.json()
@@ -70,7 +70,7 @@ def display_profile(edit_mode=False):
                         "employee_id": employee_id,
                     }
 
-                    update_response = requests.put("http://127.0.0.1:8000/api/profile/update/", headers=headers, data=data)
+                    update_response = requests.put("http://127.0.0.1:8000/profile/update/", headers=headers, data=data)
                     if update_response.status_code == 200:
                         st.success("Profile updated successfully!")
                         st.session_state['page'] = 'dashboard'  # Switch back to the dashboard page
@@ -95,22 +95,25 @@ def display_all_profiles():
     token = get_token()
     if token:
         headers = {"Authorization": f"Bearer {token}"}
-        response = requests.get("http://127.0.0.1:8000/api/admin/users/", headers=headers)
+        response = requests.get("http://127.0.0.1:8000/api/users/", headers=headers)
 
         if response.status_code == 200:
-            profiles = response.json()
-            for profile in profiles:
-                st.write(f"Name: {profile['name']}")
-                st.write(f"Email: {profile['email']}")
-                st.write(f"Phone Number: {profile['phone_number']}")
-                st.write(f"Employee ID: {profile['employee_id']}")
-                if st.button(f"Delete User {profile['email']}"):
-                    delete_response = requests.delete(f"http://127.0.0.1:8000/api/admin/users/{profile['id']}/", headers=headers)
-                    if delete_response.status_code == 200:
-                        st.success("User deleted successfully!")
-                    else:
-                        st.error(f"Failed to delete user. Status code: {delete_response.status_code}, Response: {delete_response.text}")
-                st.write("---")
+            try:
+                profiles = response.json()
+                for profile in profiles:
+                    st.write(f"Name: {profile['name']}")
+                    st.write(f"Email: {profile['email']}")
+                    st.write(f"Phone Number: {profile['phone_number']}")
+                    st.write(f"Employee ID: {profile['employee_id']}")
+                    if st.button(f"Delete User {profile['email']}"):
+                        delete_response = requests.delete(f"http://127.0.0.1:8000/api/users/{profile['id']}/", headers=headers)
+                        if delete_response.status_code == 200:
+                            st.success("User deleted successfully!")
+                        else:
+                            st.error(f"Failed to delete user. Status code: {delete_response.status_code}, Response: {delete_response.text}")
+                    st.write("---")
+            except requests.exceptions.JSONDecodeError:
+                st.error("Failed to decode JSON response from server. Please ensure the server is running correctly.")
         else:
             st.error(f"Failed to load profiles. Status code: {response.status_code}, Response: {response.text}")
     else:
@@ -130,13 +133,49 @@ def change_password():
             "new_password": new_password,
         }
 
-        response = requests.put("http://127.0.0.1:8000/api/profile/change-password/", headers=headers, data=data)
+        response = requests.put("http://127.0.0.1:8000/profile/change-password/", headers=headers, data=data)
 
         if response.status_code == 200:
             st.success("Password updated successfully!")
             st.session_state['page'] = 'dashboard'
         else:
             st.error(f"Failed to change password. Status code: {response.status_code}, Response: {response.text}")
+
+# Function to create a new user (Admin)
+def add_user_form():
+    st.title("Add New User")
+    email = st.text_input("Email")
+    name = st.text_input("Name")
+    phone_number = st.text_input("Phone Number")
+    employee_id = st.text_input("Employee ID")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Create User"):
+        token = get_token()  # Retrieve the token stored in session
+        headers = {"Authorization": f"Bearer {token}"}  # Include token in headers
+        
+        data = {
+            "email": email,
+            "name": name,
+            "phone_number": phone_number,
+            "employee_id": employee_id,
+            "password": password,
+        }
+
+        response = requests.post("http://127.0.0.1:8000/api/users/", headers=headers, data=data)
+
+        if response.status_code == 201:
+            st.success("User created successfully!")
+            st.session_state['page'] = 'dashboard'
+        else:
+            try:
+                error_message = response.json().get('detail', 'No additional error message provided.')
+            except requests.exceptions.JSONDecodeError:
+                error_message = response.text
+            st.error(f"Failed to create user. Status code: {response.status_code}, Response: {error_message}")
+
+    if st.button("Cancel"):
+        st.session_state['page'] = 'dashboard'
 
 # Main app logic
 if 'page' not in st.session_state:
@@ -168,7 +207,7 @@ if st.session_state['page'] == 'login':
             elif not any(char.isdigit() for char in password):
                 st.error("Password must contain at least one digit.")
             else:
-                api_url = "http://127.0.0.1:8000/api/register/"
+                api_url = "http://127.0.0.1:8000/register/"
 
                 data = {
                     "email": email,
@@ -218,7 +257,7 @@ if st.session_state['page'] == 'login':
         email = st.text_input("Enter your email address")
 
         if st.button("Send Reset Link"):
-            api_url = "http://127.0.0.1:8000/api/request-reset-email/"
+            api_url = "http://127.0.0.1:8000/request-reset-email/"
             data = {
                 "email": email,
             }
@@ -257,29 +296,4 @@ elif st.session_state['page'] == 'change_password':
         st.session_state['page'] = 'dashboard'
 
 elif st.session_state['page'] == 'add_user':
-    st.title("Add New User")
-    email = st.text_input("Email")
-    name = st.text_input("Name")
-    phone_number = st.text_input("Phone Number")
-    employee_id = st.text_input("Employee ID")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Create User"):
-        data = {
-            "email": email,
-            "name": name,
-            "phone_number": phone_number,
-            "employee_id": employee_id,
-            "password": password,
-        }
-
-        response = requests.post("http://127.0.0.1:8000/api/admin/users/", data=data)
-
-        if response.status_code == 201:
-            st.success("User created successfully!")
-            st.session_state['page'] = 'dashboard'
-        else:
-            st.error(f"Failed to create user. Status code: {response.status_code}, Response: {response.text}")
-
-    if st.button("Cancel"):
-        st.session_state['page'] = 'dashboard'
+    add_user_form()
