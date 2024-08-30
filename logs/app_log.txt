@@ -5,3 +5,29 @@
 2024-08-27 10:25:45.679318 - User shahanas1@gmail.com logged in successfully.
 2024-08-27 10:26:07.953000 - Admin logged out.
 2024-08-27 20:42:25.554562 - Password reset requested for shahanask4801@gmail.com.
+2024-08-29 09:43:51.598187 - User shahanas1@gmail.com logged in successfully.
+2024-08-29 09:44:01.848966 - User user@example.com deleted successfully.
+2024-08-29 09:44:53.214389 - User fasia12@gmail.com created successfully.
+2024-08-29 09:45:05.330271 - Admin logged out.
+2024-08-29 09:45:31.854484 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:33.002403 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:37.638327 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:40.579263 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:42.318865 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:42.439669 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:43.180992 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:43.416252 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:47.125341 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:49.781242 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:51.695611 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:52.068706 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:52.214714 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:53.339752 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:53.620737 - Login failed: No active account found with the given credentials
+2024-08-29 09:45:54.477189 - Login failed: No active account found with the given credentials
+2024-08-29 09:46:25.776798 - Login failed: No active account found with the given credentials
+2024-08-29 09:47:35.670799 - Login failed: No active account found with the given credentials
+2024-08-29 09:47:35.707140 - Login failed: No active account found with the given credentials
+2024-08-29 09:47:36.044197 - Login failed: No active account found with the given credentials
+2024-08-29 09:47:38.208073 - Login failed: No active account found with the given credentials
+2024-08-29 09:47:41.691185 - Login failed: No active account found with the given credentials
