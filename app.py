@@ -87,7 +87,12 @@ def display_profile(edit_mode=False):
                         st.session_state['page'] = 'dashboard'  # Switch back to the dashboard page
                         log_message("Profile updated successfully.")
                     else:
-                        error_message = update_response.json().get('detail', 'Error updating profile.')
+                        try:
+                            error_message = update_response.json().get('detail', 'Error updating profile.')
+                        except requests.exceptions.JSONDecodeError:
+                            error_message = update_response.text
+                            log_message(f"Error decoding JSON response: {update_response.text}")
+                            print(f"Error decoding JSON response. Raw response: {update_response.text}")  # Log to console
                         log_message(f"Profile update failed: {error_message}")
                         print(f"Failed to update profile. Response: {error_message}")  # Log to console
             else:
@@ -106,7 +111,12 @@ def display_profile(edit_mode=False):
                 st.session_state['page'] = 'login'
                 log_message("Session expired, user logged out.")
             else:
-                error_message = response.json().get('detail', 'Error loading profile.')
+                try:
+                    error_message = response.json().get('detail', 'Error loading profile.')
+                except requests.exceptions.JSONDecodeError:
+                    error_message = response.text
+                    log_message(f"Error decoding JSON response: {response.text}")
+                    print(f"Error decoding JSON response. Raw response: {response.text}")  # Log to console
                 log_message(f"Profile load failed: {error_message}")
                 print(f"Failed to load profile. Response: {error_message}")  # Log to console
     else:
@@ -133,7 +143,12 @@ def display_all_profiles():
                             st.success("User deleted successfully!")
                             log_message(f"User {profile['email']} deleted successfully.")
                         else:
-                            error_message = delete_response.json().get('detail', 'Error deleting user.')
+                            try:
+                                error_message = delete_response.json().get('detail', 'Error deleting user.')
+                            except requests.exceptions.JSONDecodeError:
+                                error_message = delete_response.text
+                                log_message(f"Error decoding JSON response: {delete_response.text}")
+                                print(f"Error decoding JSON response. Raw response: {delete_response.text}")  # Log to console
                             log_message(f"User delete failed: {error_message}")
                             print(f"Failed to delete user. Response: {error_message}")  # Log to console
                     st.write("---")
@@ -147,7 +162,12 @@ def display_all_profiles():
                 st.session_state['page'] = 'login'
                 log_message("Session expired, admin logged out.")
             else:
-                error_message = response.json().get('detail', 'Error loading profiles.')
+                try:
+                    error_message = response.json().get('detail', 'Error loading profiles.')
+                except requests.exceptions.JSONDecodeError:
+                    error_message = response.text
+                    log_message(f"Error decoding JSON response: {response.text}")
+                    print(f"Error decoding JSON response. Raw response: {response.text}")  # Log to console
                 log_message(f"Profiles load failed: {error_message}")
                 print(f"Failed to load profiles. Response: {error_message}")  # Log to console
     else:
@@ -174,7 +194,12 @@ def change_password():
             st.session_state['page'] = 'dashboard'
             log_message("Password updated successfully.")
         else:
-            error_message = response.json().get('detail', 'Failed to change password.')
+            try:
+                error_message = response.json().get('detail', 'Failed to change password.')
+            except requests.exceptions.JSONDecodeError:
+                error_message = response.text
+                log_message(f"Error decoding JSON response: {response.text}")
+                print(f"Error decoding JSON response. Raw response: {response.text}")  # Log to console
             log_message(f"Password change failed: {error_message}")
             print(f"Failed to change password. Response: {error_message}")  # Log to console
 
@@ -210,6 +235,8 @@ def add_user_form():
                 error_message = response.json().get('detail', 'No additional error message provided.')
             except requests.exceptions.JSONDecodeError:
                 error_message = response.text
+                log_message(f"Error decoding JSON response: {response.text}")
+                print(f"Error decoding JSON response. Raw response: {response.text}")  # Log to console
             log_message(f"User creation failed: {error_message}")
             print(f"Failed to create user. Response: {error_message}")  # Log to console
 
@@ -264,7 +291,12 @@ if st.session_state['page'] == 'login':
                     st.session_state['page'] = 'login'
                     log_message(f"User {email} registered successfully.")
                 else:
-                    error_message = response.json().get('detail', 'Signup failed.')
+                    try:
+                        error_message = response.json().get('detail', 'Signup failed.')
+                    except requests.exceptions.JSONDecodeError:
+                        error_message = response.text
+                        log_message(f"Error decoding JSON response: {response.text}")
+                        print(f"Error decoding JSON response. Raw response: {response.text}")  # Log to console
                     log_message(f"Signup failed: {error_message}")
                     print(f"Signup failed. Response: {error_message}")  # Log to console
 
@@ -292,7 +324,12 @@ if st.session_state['page'] == 'login':
                 st.session_state['page'] = 'dashboard'
                 log_message(f"User {email} logged in successfully.")
             else:
-                error_message = response.json().get('detail', 'Login failed.')
+                try:
+                    error_message = response.json().get('detail', 'Login failed.')
+                except requests.exceptions.JSONDecodeError:
+                    error_message = response.text
+                    log_message(f"Error decoding JSON response: {response.text}")
+                    print(f"Error decoding JSON response. Raw response: {response.text}")  # Log to console
                 log_message(f"Login failed: {error_message}")
                 print(f"Login failed. Response: {error_message}")  # Log to console
 
@@ -312,7 +349,12 @@ if st.session_state['page'] == 'login':
                 st.success("Password reset link has been sent to your email.")
                 log_message(f"Password reset requested for {email}.")
             else:
-                error_message = response.json().get('detail', 'Failed to send reset link.')
+                try:
+                    error_message = response.json().get('detail', 'Failed to send reset link.')
+                except requests.exceptions.JSONDecodeError:
+                    error_message = response.text
+                    log_message(f"Error decoding JSON response: {response.text}")
+                    print(f"Error decoding JSON response. Raw response: {response.text}")  # Log to console
                 log_message(f"Password reset request failed: {error_message}")
                 print(f"Failed to send reset link. Response: {error_message}")  # Log to console
 
